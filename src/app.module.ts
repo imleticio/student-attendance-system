@@ -8,6 +8,13 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { SubjectsModule } from './subjects/subjects.module';
+import { CoursesModule } from './courses/courses.module';
+import { EnrollmentsModule } from './enrollments/enrollments.module';
+import { ClassesModule } from './classes/classes.module';
+import { AttendancesModule } from './attendances/attendances.module';
+import { AttendanceSessionsModule } from './attendance-sessions/attendance-sessions.module';
 
 
 
@@ -31,7 +38,28 @@ import { AuthModule } from './auth/auth.module';
     }),
     
     
-    AuthModule
+    AuthModule,
+    
+    
+    UsersModule,
+    
+    
+    SubjectsModule,
+    
+    
+    CoursesModule,
+    
+    
+    EnrollmentsModule,
+    
+    
+    ClassesModule,
+    
+    
+    AttendancesModule,
+    
+    
+    AttendanceSessionsModule
   
   ],
  
