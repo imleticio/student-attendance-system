@@ -2,13 +2,18 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 import { Course } from '../../courses/entities/course.entity';
+import { Institution } from '../../institutions/entities/institution.entity';
 
 @Entity('subjects')
+@Unique(['code', 'institution'])
 export class Subject {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -19,7 +24,6 @@ export class Subject {
   name: string;
 
   @Column('varchar', {
-    unique: true,
     length: 30,
   })
   code: string;
@@ -33,6 +37,13 @@ export class Subject {
     default: true,
   })
   isActive: boolean;
+
+  @ManyToOne(() => Institution, (institution) => institution.subjects, {
+    nullable: false,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'institution_id' })
+  institution: Institution;
 
   @OneToMany(() => Course, (course) => course.subject)
   courses: Course[];

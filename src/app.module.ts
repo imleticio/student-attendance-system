@@ -15,7 +15,7 @@ import { EnrollmentsModule } from './enrollments/enrollments.module';
 import { ClassesModule } from './classes/classes.module';
 import { AttendancesModule } from './attendances/attendances.module';
 import { AttendanceSessionsModule } from './attendance-sessions/attendance-sessions.module';
-import { InstitutionModule } from './institution/institution.module';
+import { InstitutionsModule } from './institutions/institutions.module';
 
 
 
@@ -63,7 +63,9 @@ import { InstitutionModule } from './institution/institution.module';
     AttendanceSessionsModule,
     
     
-    InstitutionModule
+    InstitutionsModule,
+    
+    
   
   ],
  
