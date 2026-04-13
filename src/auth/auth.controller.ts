@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginUserDto } from './dto';
 import { Auth, GetUser } from './decorators';
-import { validRoles } from './interfaces';
+import { ValidRoles } from './interfaces';
 import { User } from './entities';
 
 @Controller('auth')
@@ -20,7 +20,7 @@ export class AuthController {
   }
 
    @Get('private')
-   @Auth(validRoles.admin)
+   @Auth(ValidRoles.ADMIN)
 
   privateRoute(
     @GetUser() user : User
