@@ -45,6 +45,10 @@ export class CoursesService {
       );
     }
 
+    // Multi-institution rule: when this validation is implemented, load
+    // subject.institution and teacher.institution and ensure both IDs match
+    // before creating the course.
+
     try {
       const course = this.courseRepository.create({
         ...courseDetails,

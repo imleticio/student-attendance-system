@@ -4,6 +4,8 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -13,6 +15,7 @@ import { Course } from '../../courses/entities/course.entity';
 import { Enrollment } from '../../enrollments/entities/enrollment.entity';
 import { Class } from '../../classes/entities/class.entity';
 import { Attendance } from '../../attendances/entities/attendance.entity';
+import { Institution } from '../../institutions/entities/institution.entity';
 
 @Entity('users')
 export class User {
@@ -44,6 +47,13 @@ export class User {
     default: true,
   })
   isActive: boolean;
+
+  @ManyToOne(() => Institution, (institution) => institution.users, {
+    nullable: false,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'institution_id' })
+  institution: Institution;
 
   @OneToMany(() => Course, (course) => course.teacher)
   teachingCourses: Course[];
