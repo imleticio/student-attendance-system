@@ -23,6 +23,9 @@ export class CreateUserDto {
     @MinLength(4)
     fullName: string;
 
+    @IsUUID()
+    institution_id
+
 
 
 }

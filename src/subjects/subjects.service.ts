@@ -29,9 +29,12 @@ export class SubjectsService {
         createSubjectDto.code?.trim().toUpperCase() ??
         (await this.generateUniqueCode(createSubjectDto.name));
 
+      const {institution_id , ...subjectDto} =createSubjectDto
+      
       const subject = this.subjectRepository.create({
-        ...createSubjectDto,
+        ...subjectDto,
         code,
+        institution:{id:institution_id}
       });
 
       await this.subjectRepository.save(subject);

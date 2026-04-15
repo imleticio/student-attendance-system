@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString, MaxLength } from "class-validator";
+import { IsBoolean, IsOptional, IsString, IsUUID, MaxLength } from "class-validator";
 
 export class CreateSubjectDto {
 
@@ -18,5 +18,8 @@ export class CreateSubjectDto {
     @IsBoolean()
     @IsOptional()
     isActive?: boolean;
+
+    @IsUUID()
+    institution_id:string
 
 }
