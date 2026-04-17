@@ -72,13 +72,19 @@ export class CoursesService {
 
   async findAll(paginationDto: PaginationDto) {
     const { limit = 10, offset = 0 } = paginationDto;
-    const courses = await this.subjectRepository.find({
+    const courses = await this.courseRepository.find({
       take: limit,
       skip: offset,
+      relations: {
+        subject: true,
+        teacher: true,
+      },
+      order: {
+        createdAt: 'DESC',
+      },
     });
-    return courses.map((course) => ({
-      course,
-    }));
+
+    return courses;
   }
 
   async findOne(term: string) {
@@ -120,8 +126,70 @@ export class CoursesService {
     return course;
   }
 
-  update(id: number, updateCourseDto: UpdateCourseDto) {
-    return `This action updates a #${id} course`;
+  async update(id: string | number, updateCourseDto: UpdateCourseDto) {
+    const normalizedId = String(id).trim();
+
+    if (!isUUID(normalizedId)) {
+      throw new BadRequestException(
+        `Invalid course ID format: "${normalizedId}"`,
+      );
+    }
+
+    const { subjectId, teacherId, ...courseDetails } = updateCourseDto;
+
+    const course = await this.courseRepository.findOne({
+      where: { id: normalizedId },
+      relations: {
+        subject: true,
+        teacher: true,
+      },
+    });
+
+    if (!course) {
+      throw new NotFoundException(`Course with id "${normalizedId}" not found`);
+    }
+
+    if (subjectId) {
+      const subject = await this.subjectRepository.findOneBy({ id: subjectId });
+
+      if (!subject) {
+        throw new NotFoundException(`Subject with id "${subjectId}" not found`);
+      }
+
+      course.subject = subject;
+    }
+
+    if (teacherId) {
+      const teacher = await this.userRepository.findOneBy({ id: teacherId });
+
+      if (!teacher) {
+        throw new NotFoundException(`Teacher with id "${teacherId}" not found`);
+      }
+
+      if (teacher.role !== ValidRoles.TEACHER) {
+        throw new BadRequestException(
+          `User with id "${teacherId}" does not have teacher role`,
+        );
+      }
+
+      course.teacher = teacher;
+    }
+
+    this.courseRepository.merge(course, courseDetails);
+
+    try {
+      await this.courseRepository.save(course);
+
+      return await this.courseRepository.findOne({
+        where: { id: course.id },
+        relations: {
+          subject: true,
+          teacher: true,
+        },
+      });
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
   }
 
   remove(id: number) {
