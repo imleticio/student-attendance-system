@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateAttendanceSessionDto } from './dto/create-attendance-session.dto';
@@ -16,6 +18,8 @@ import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AttendanceSessionsService {
+  private readonly logger = new Logger('AttendanceSessionsService');
+
   constructor(
     @InjectRepository(AttendanceSession)
     private readonly attendanceSessionRepository: Repository<AttendanceSession>,
@@ -171,11 +175,89 @@ export class AttendanceSessionsService {
     return session;
   }
 
-  update(id: number, updateAttendanceSessionDto: UpdateAttendanceSessionDto) {
-    return `This action updates a #${id} attendanceSession`;
+  async update(
+    id: string | number,
+    updateAttendanceSessionDto: UpdateAttendanceSessionDto,
+  ) {
+    const session = await this.findOne(id);
+    const { classId, expiresAt, durationMinutes, ...sessionDetails } =
+      updateAttendanceSessionDto;
+
+    if (classId && classId !== session.class.id) {
+      const classEntity = await this.classRepository.findOneBy({ id: classId });
+      if (!classEntity) {
+        throw new NotFoundException(`Class with id "${classId}" not found`);
+      }
+
+      const now = new Date();
+      const activeSession = await this.attendanceSessionRepository
+        .createQueryBuilder('current')
+        .leftJoin('current.class', 'class')
+        .where('class.id = :classId', { classId })
+        .andWhere('current.id != :sessionId', { sessionId: session.id })
+        .andWhere('current.isActive = true')
+        .andWhere('current.closedAt IS NULL')
+        .andWhere('current.expiresAt > :now', { now })
+        .getOne();
+
+      if (activeSession) {
+        throw new BadRequestException(
+          `Class "${classId}" already has an active attendance session`,
+        );
+      }
+
+      session.class = classEntity;
+    }
+
+    if (expiresAt) {
+      const resolvedExpiresAt = new Date(expiresAt);
+      if (resolvedExpiresAt <= session.openedAt) {
+        throw new BadRequestException('expiresAt must be after openedAt');
+      }
+      session.expiresAt = resolvedExpiresAt;
+    } else if (durationMinutes) {
+      session.expiresAt = new Date(
+        session.openedAt.getTime() + durationMinutes * 60 * 1000,
+      );
+    }
+
+    this.attendanceSessionRepository.merge(session, sessionDetails);
+
+    try {
+      await this.attendanceSessionRepository.save(session);
+
+      return await this.attendanceSessionRepository.findOne({
+        where: { id: session.id },
+        relations: {
+          class: true,
+        },
+      });
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} attendanceSession`;
+  async remove(id: string | number) {
+    const session = await this.findOne(id);
+
+    try {
+      await this.attendanceSessionRepository.remove(session);
+      return {
+        message: `Attendance session "${session.id}" removed successfully`,
+      };
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
+  }
+
+  private handleDBExceptions(error: any): never {
+    if (error.code === '23505') {
+      throw new BadRequestException(error.detail);
+    }
+
+    this.logger.error(error);
+    throw new InternalServerErrorException(
+      'Unexpected error, check server logs',
+    );
   }
 }

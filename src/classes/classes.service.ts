@@ -13,6 +13,8 @@ import { Repository } from 'typeorm';
 import { Course } from '../courses/entities/course.entity';
 import { User } from '../auth/entities/user.entity';
 import { ValidRoles } from '../auth/interfaces';
+import { PaginationDto } from '../common/dtos/pagination.dto';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class ClassesService {
@@ -78,12 +80,45 @@ export class ClassesService {
     }
   }
 
-  findAll() {
-    return `This action returns all classes`;
+  async findAll(paginationDto: PaginationDto) {
+    const { limit = 10, offset = 0 } = paginationDto;
+
+    return await this.classRepository.find({
+      take: limit,
+      skip: offset,
+      relations: {
+        course: true,
+        createdBy: true,
+      },
+      order: {
+        classDate: 'DESC',
+        startTime: 'DESC',
+      },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} class`;
+  async findOne(id: string | number) {
+    const normalizedId = String(id).trim();
+
+    if (!isUUID(normalizedId)) {
+      throw new BadRequestException(
+        `Invalid class ID format: "${normalizedId}"`,
+      );
+    }
+
+    const classEntity = await this.classRepository.findOne({
+      where: { id: normalizedId },
+      relations: {
+        course: true,
+        createdBy: true,
+      },
+    });
+
+    if (!classEntity) {
+      throw new NotFoundException(`Class with id "${normalizedId}" not found`);
+    }
+
+    return classEntity;
   }
 
   update(id: number, updateClassDto: UpdateClassDto) {
