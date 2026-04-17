@@ -158,6 +158,55 @@ Si esta fuera del radio, rechaza el marcado.
 }
 ```
 
+## Coleccion Postman recomendada
+
+### Variables de entorno sugeridas
+
+- `baseUrl`: `http://localhost:3000/api`
+- `teacherToken`: JWT de usuario `teacher` o `admin`
+- `studentToken`: JWT de usuario `student`
+- `courseId`
+- `classId`
+- `sessionId`
+- `qrToken`
+
+### Orden de requests
+
+1. `POST {{baseUrl}}/auth/login` (teacher/admin)
+   - Guardar `token` en `teacherToken`.
+2. `POST {{baseUrl}}/classes`
+   - Header: `Authorization: Bearer {{teacherToken}}`
+   - Guardar `id` en `classId`.
+3. `POST {{baseUrl}}/enrollments`
+   - Header: `Authorization: Bearer {{teacherToken}}`
+4. `POST {{baseUrl}}/attendance-sessions`
+   - Header: `Authorization: Bearer {{teacherToken}}`
+   - Guardar `id` en `sessionId`.
+5. `GET {{baseUrl}}/attendance-sessions/{{sessionId}}/qr-token`
+   - Header: `Authorization: Bearer {{teacherToken}}`
+   - Guardar `token` en `qrToken`.
+6. `POST {{baseUrl}}/auth/login` (student)
+   - Guardar `token` en `studentToken`.
+7. `POST {{baseUrl}}/attendances/scan`
+   - Header: `Authorization: Bearer {{studentToken}}`
+   - Body usa `{{qrToken}}`.
+
+### Tests rapidos de Postman (opcionales)
+
+En la pestana `Tests` de algunos requests puedes usar:
+
+```javascript
+// Guardar token de login
+pm.environment.set('teacherToken', pm.response.json().token);
+
+// Guardar id de clase/sesion
+pm.environment.set('classId', pm.response.json().id);
+pm.environment.set('sessionId', pm.response.json().id);
+
+// Guardar qrToken
+pm.environment.set('qrToken', pm.response.json().token);
+```
+
 ## Notas importantes
 
 - Usa UUID de `attendance_sessions.id` para `:id/qr-token`.
