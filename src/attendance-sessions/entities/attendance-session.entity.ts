@@ -33,6 +33,22 @@ export class AttendanceSession {
   })
   qrValue?: string | null;
 
+  @Column('double precision')
+  geoLat: number;
+
+  @Column('double precision')
+  geoLng: number;
+
+  @Column('int', {
+    default: 120,
+  })
+  geoRadiusMeters: number;
+
+  @Column('int', {
+    default: 10,
+  })
+  qrRotationSeconds: number;
+
   @Column({
     type: 'timestamp without time zone',
   })
